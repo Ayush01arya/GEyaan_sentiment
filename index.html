@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            color: #4D3CBE;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 4px;
+            display: none; /* Hide the result initially */
+        }
+        button {
+            background-color: #4D3CBE;
+            color: white;
+            border: none;
+            padding: 6px 12px; /* Smaller padding for smaller buttons */
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px; /* Smaller font size */
+            margin: 0 5px; /* Spacing between buttons */
+            display: inline-block; /* Align buttons in one line */
+        }
+        button.clear {
+            background-color: #f44336; /* Red color for clear button */
+        }
+        button.delete {
+            background-color: #ff9800; /* Orange color for delete button */
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            resize: none; /* Prevent resizing */
+            box-sizing: border-box; /* Include padding and border in width */
+        }
+        /* Spinner styles */
+        .spinner {
+            display: none; /* Hidden by default */
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #4D3CBE;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @media (max-width: 600px) {
+            textarea {
+                font-size: 14px; /* Slightly reduce font size on small screens */
+                padding: 8px; /* Adjust padding */
+            }
+            button {
+                font-size: 14px; /* Adjust button font size */
+                padding: 8px 16px; /* Adjust button padding */
+            }
+        }
+        @media (min-width: 601px) {
+            textarea {
+                font-size: 16px; /* Default font size for larger screens */
+                padding: 10px; /* Default padding */
+            }
+            button {
+                font-size: 16px; /* Default button font size */
+                padding: 10px 20px; /* Default button padding */
+            }
+        }
+        img.logo {
+            display: block;
+            margin: 0 auto 20px;
+            max-width: 150px; /* Adjust logo size */
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <img src="Profit.png" alt="Company Logo" class="logo"> <!-- Replace with your logo URL -->
+        <h1>Sentiment Analysis</h1>
+        <form id="sentimentForm">
+            <label for="text">Enter text to analyze:</label><br><br>
+            <textarea id="text" rows="4" cols="50" placeholder="Type here..." required></textarea><br><br>
+            <button type="submit">Analyze Sentiment</button>
+            <button type="button" class="clear" id="clearButton">Clear</button>
+            <button type="button" class="delete" id="deleteButton">Delete</button>
+        </form>
+
+        <div id="result"></div>
+        <div class="spinner" id="spinner"></div> <!-- Spinner element -->
+    </div>
+
+    <script>
+        const form = document.getElementById('sentimentForm');
+        const resultDiv = document.getElementById('result');
+        const spinner = document.getElementById('spinner');
+        const clearButton = document.getElementById('clearButton');
+        const deleteButton = document.getElementById('deleteButton');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const text = document.getElementById('text').value;
+            if (!text) {
+                alert('Please enter some text');
+                return;
+            }
+
+            // Show spinner after a delay of 2 seconds
+            spinner.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            setTimeout(() => {
+                fetch('http://127.0.0.1:5000/sentiment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide spinner
+                    spinner.style.display = 'none';
+                    resultDiv.style.display = 'block'; // Show result
+
+                    if (data.error) {
+                        resultDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <p><strong>Mood:</strong> ${data.mood}</p>
+                            <p><strong>Polarity:</strong> ${data.polarity}</p>
+                            <p><strong>Subjectivity:</strong> ${data.subjectivity}</p>
+                            <p><strong>Context:</strong> ${data.context}</p>
+                            <p><strong>Suggestion:</strong> ${data.suggestion}</p>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Hide spinner
+                    spinner.style.display = 'none';
+                });
+            }, 2000); // 2 seconds delay
+        });
+
+        // Clear button functionality
+        clearButton.addEventListener('click', function() {
+            document.getElementById('text').value = ''; // Clear textarea
+            resultDiv.innerHTML = ''; // Clear previous results
+            resultDiv.style.display = 'none'; // Hide result
+        });
+
+        // Delete button functionality (assuming it clears the result area)
+        deleteButton.addEventListener('click', function() {
+            resultDiv.innerHTML = ''; // Clear result area
+            resultDiv.style.display = 'none'; // Hide result
+        });
+    </script>
+
+</body>
+</html>
