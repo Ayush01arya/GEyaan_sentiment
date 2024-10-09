@@ -6,7 +6,9 @@ from textblob import TextBlob
 app = Flask(__name__)
 CORS(app)
 
-
+@app.route("/")
+def start():
+    return "<h><b><center>Ayush Arya API</center></b></h1>"
 # Define more detailed sentiment categories
 def classify_sentiment(polarity):
     if polarity > 0.75:
