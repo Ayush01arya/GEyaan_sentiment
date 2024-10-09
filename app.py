@@ -3,13 +3,14 @@ from flask_cors import CORS
 from textblob import TextBlob
 
 app = Flask(__name__)
-CORS(app)
+
+# Allow all origins or specify certain domains to allow CORS
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 @app.route("/")
 def start():
-    return "<h1><b><center>Ayush Arya API</center></b></h1>"
+    return "<h><b><center>Ayush Arya API</center></b></h1>"
 
-# Define more detailed sentiment categories
 def classify_sentiment(polarity):
     if polarity > 0.75:
         return "Very Positive"
@@ -26,7 +27,6 @@ def classify_sentiment(polarity):
     else:
         return "Very Negative"
 
-# Provide sentiment context based on keywords
 def analyze_context(text, polarity):
     keywords_help = ['help', 'support', 'assist', 'issue', 'problem']
     keywords_satisfaction = ['happy', 'satisfied', 'great', 'love']
@@ -51,18 +51,13 @@ def sentiment_analysis():
         if not text:
             return jsonify({'error': 'No text provided'}), 400
 
-        # Perform sentiment analysis using TextBlob
         blob = TextBlob(text)
         polarity = blob.sentiment.polarity
         subjectivity = blob.sentiment.subjectivity
 
-        # Classify sentiment into more detailed categories
         mood = classify_sentiment(polarity)
-
-        # Provide context based on keywords and tone
         context = analyze_context(text, polarity)
 
-        # Suggest actions based on sentiment
         if mood in ['Negative', 'Very Negative']:
             suggestion = 'Consider escalating this issue or providing immediate assistance.'
         elif mood == 'Slightly Negative':
