@@ -7,7 +7,7 @@ import requests
 app = Flask(__name__)
 
 # Use more specific CORS settings for security and functionality
-cors = CORS(app, resources={r"/send_otp": {"origins": "*"}, r"/sentiment": {"origins": "*"}})  # Allow all origins for both routes
+cors = CORS(app, resources={r"/send_otp": {"origins": "*"},r"/verify_otp": {"origins": "*"}, r"/sentiment": {"origins": "*"}})  # Allow all origins for both routes
 
 
 
