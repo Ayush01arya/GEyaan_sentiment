@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from textblob import TextBlob
+import random
+import requests
 
 app = Flask(__name__)
 
@@ -89,7 +91,42 @@ def generate_suggestion(mood):
         return 'Acknowledge the positive sentiment but check if additional help is needed.'
     else:
         return 'Thank the customer for their feedback and offer continued support.'
+def send_otp(mobile_number, otp):
+    url = "https://www.fast2sms.com/dev/bulkV2"
 
+    # Your API details here (update with your actual sender_id, template_id, etc.)
+    querystring = {
+        "authorization": "791aHfEgF6fXxj46ZNNposGDV24WWZN3NRIq9tZdvXytz8z79KuUUpKb2Epw",  # Replace with your Fast2SMS API Key
+        "route": "otp",
+        "variables_values": otp,
+        "flash": "0",
+        "numbers": mobile_number
+    }
+
+    headers = {
+        'cache-control': "no-cache"
+    }
+
+    response = requests.get(url, headers=headers, params=querystring)
+
+    return response.status_code == 200
+
+
+@app.route('/send_otp', methods=['POST'])
+def send_otp_api():
+    data = request.json
+    mobile_number = data.get('mobile_number')
+
+    # Generate a random 4-digit OTP
+    otp = random.randint(1000000, 9999999)
+
+    # Send the OTP using Fast2SMS API
+    success = send_otp(mobile_number, otp)
+
+    if success:
+        return jsonify({"message": "OTP sent successfully", "otp": otp}), 200
+    else:
+        return jsonify({"message": "Failed to send OTP"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
