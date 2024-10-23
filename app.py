@@ -94,26 +94,42 @@ def generate_suggestion(mood):
         return 'Thank the customer for their feedback and offer continued support.'
 otp_storage = {}
 
+otp_storage = {}
+
 def send_otp(mobile_number, otp):
-    # Your implementation for sending OTP using Fast2SMS API goes here
-    # Return True if sent successfully, otherwise return False
-    return True  # Placeholder for the actual implementation
+    """
+    This function sends an OTP using the Fast2SMS API.
+    Replace this placeholder implementation with the actual code that calls the Fast2SMS API.
+    """
+    try:
+        # Your implementation to send OTP through Fast2SMS
+        # Make the API call to send OTP here
+        return True  # Return True if OTP sent successfully
+    except Exception as e:
+        print(f"Error sending OTP: {e}")
+        return False
 
 @app.route('/send_otp', methods=['POST'])
 def send_otp_api():
     data = request.json
     mobile_number = data.get('mobile_number')
 
+    if not mobile_number:
+        return jsonify({"message": "Mobile number is required"}), 400
+
     # Generate a random 6-digit OTP
     otp = random.randint(100000, 999999)
 
-    # Send the OTP using Fast2SMS API
+    # Send the OTP using the send_otp function
     success = send_otp(mobile_number, otp)
 
     if success:
-        # Store the OTP for verification
-        otp_storage[mobile_number] = otp  # Store OTP by mobile number
-        return jsonify({"message": "OTP sent successfully", "otp": otp}), 200
+        # Store the OTP with a timestamp (set to expire in 5 minutes)
+        otp_storage[mobile_number] = {
+            'otp': otp,
+            'expiry_time': time.time() + 300  # OTP expires in 300 seconds (5 minutes)
+        }
+        return jsonify({"message": "OTP sent successfully"}), 200
     else:
         return jsonify({"message": "Failed to send OTP"}), 500
 
@@ -123,14 +139,26 @@ def verify_otp_api():
     mobile_number = data.get('mobile_number')
     otp = data.get('otp')
 
-    # Check if the OTP matches the stored one
-    if mobile_number in otp_storage and otp_storage[mobile_number] == otp:
-        # OTP verified successfully
-        return jsonify({"success": True, "message": "OTP verified successfully"}), 200
-    else:
-        # OTP verification failed
-        return jsonify({"success": False, "message": "Invalid OTP"}), 400
+    if not mobile_number or not otp:
+        return jsonify({"message": "Mobile number and OTP are required"}), 400
 
+    # Check if the OTP for the given mobile number exists and hasn't expired
+    stored_otp_data = otp_storage.get(mobile_number)
+    if stored_otp_data:
+        stored_otp = stored_otp_data['otp']
+        expiry_time = stored_otp_data['expiry_time']
+
+        if time.time() > expiry_time:
+            return jsonify({"success": False, "message": "OTP has expired"}), 400
+
+        if stored_otp == int(otp):
+            # OTP verified successfully
+            del otp_storage[mobile_number]  # Optionally, remove the OTP after successful verification
+            return jsonify({"success": True, "message": "OTP verified successfully"}), 200
+        else:
+            return jsonify({"success": False, "message": "Invalid OTP"}), 400
+    else:
+        return jsonify({"success": False, "message": "No OTP found for this number"}), 400
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
